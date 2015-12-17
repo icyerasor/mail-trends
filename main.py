@@ -21,12 +21,13 @@ def GetOptsMap():
       "username=", "password=", "use_ssl", "server=", 
 
       # Other params
-      "filter_out=", "me=",
+      "filter_out=", "me=", "mailbox=", "excludeMailboxes=",
       
       # Development options
       "record", "replay", 
       "max_messages=", "random_subset",
-      "skip_labels"])
+      "skip_labels",
+	  "recursive"])
   
   opts_map = {}
   for name, value in opts:
@@ -38,6 +39,12 @@ def GetOptsMap():
     opts_map["password"] = getpass.getpass(
         prompt="Password for %s: " % opts_map["username"])
   
+  if "mailbox" not in opts_map:
+    opts_map["mailbox"] = False
+  
+  if "excludeMailboxes" not in opts_map:
+    opts_map["excludeMailboxes"] = False
+  
   assert "password" in opts_map
   assert "server" in opts_map
   
@@ -46,6 +53,7 @@ def GetOptsMap():
 def GetMessageInfos(opts):
   m = mail.Mail(
       opts["server"], "use_ssl" in opts, opts["username"], opts["password"],
+	  "recursive" in opts, opts["mailbox"], opts["excludeMailboxes"],
       "record" in opts, "replay" in opts, 
       "max_messages" in opts and int(opts["max_messages"]) or -1,
       "random_subset" in opts)

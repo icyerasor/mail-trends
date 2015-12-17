@@ -10,7 +10,7 @@ MAILBOX_GMAIL_ALL_MAIL = "[Gmail]/All Mail"
 MAILBOX_GMAIL_PREFIX = "[Gmail]"
 
 class Mail(object):
-  def __init__(self, server, use_ssl, username, password, 
+  def __init__(self, server, use_ssl, username, password, recursive, mailbox, excludeMailboxes,
       record=False, replay=False, max_messages=-1, random_subset=False):
     self.__server = server
     self.__username = username
@@ -18,8 +18,14 @@ class Mail(object):
     self.__replay = replay
     self.__max_messages = max_messages
     self.__random_subset = random_subset
+    self.__recursive = recursive
+    self.__mailbox = mailbox
+    self.__excludeMailboxes = excludeMailboxes
     
     self.__current_mailbox = None
+    
+    if mailbox == "/":
+      self.__recursive = True
     
     if record or replay:
       self.__cache = cache.FileCache()
@@ -37,7 +43,10 @@ class Mail(object):
   def GetMailboxes(self):
     logging.info("Getting mailboxes")
     
-    r, mailboxes_data = self.__mail.list()
+    if self.__mailbox and self.__mailbox != "/":
+      r, mailboxes_data = self.__mail.list(self.__mailbox)
+    else:
+     r, mailboxes_data = self.__mail.list()
     self.__AssertOk(r)
     
     mailboxes = []
@@ -53,14 +62,23 @@ class Mail(object):
       if not "\\Noselect" in attributes and \
           name.find(MAILBOX_GMAIL_PREFIX) != 0:
         mailboxes.append(name)
-    
+    if self.__excludeMailboxes:
+      excludeMailboxes = self.__excludeMailboxes.split(",")
+      for excludeMailbox in excludeMailboxes:
+        if excludeMailbox in mailboxes: mailboxes.remove(excludeMailbox)
     return mailboxes
   
   def SelectAllMail(self):
-    self.SelectMailbox(MAILBOX_GMAIL_ALL_MAIL)
+    if self.__mailbox:
+      if self.__mailbox != "/":
+        self.SelectMailbox(self.__mailbox)
+      else:
+        return
+    else:
+      self.SelectMailbox(MAILBOX_GMAIL_ALL_MAIL)
 
   def SelectMailbox(self, mailbox):
-    logging.info("Selecting mailbox '%s'", mailbox)
+    logging.info("Selecting mailbox '%s', recursive: %s", mailbox, self.__recursive)
     r, data = self.__mail.select(mailbox)
     self.__AssertOk(r)
     
@@ -72,7 +90,15 @@ class Mail(object):
     return [m.GetMessageId() for m in message_infos]
 
   def GetMessageInfos(self):
-    return self.__UidFetch(
+    if self.__recursive:
+      message_infos = []
+      for mailbox in self.GetMailboxes():
+        self.SelectMailbox(mailbox)
+        message_infos.extend(self.__UidFetch("ALL", 
+        "(UID FLAGS INTERNALDATE RFC822.SIZE RFC822.HEADER)", self.__max_messages))
+      return message_infos
+    else:
+	  return self.__UidFetch(
         "ALL", 
         "(UID FLAGS INTERNALDATE RFC822.SIZE RFC822.HEADER)",
         self.__max_messages)

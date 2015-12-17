@@ -79,8 +79,10 @@ class StringScanner(object):
           value.append(c)
       
       value = "".join(value).split()
-    # Numbers
-    else:
+    # Numbers, etc if they are not directly at the end
+    elif self.__data.find(" ", self.__index) != -1:
       value = self.ReadUntil(" ")
+    else:
+	  value = self.ReadUntilLength(self.__length)
     
     return value
