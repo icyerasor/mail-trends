@@ -8,7 +8,7 @@ Mail Trends lets you analyze and visualize your email (as extracted from an IMAP
 
 To see some sample output, here's [the result](http://persistent.info/mail-trends/enron/) of running it over the [Enron Email Dataset](http://www.cs.cmu.edu/~enron/) (just two people's worth of emails).
 
-To run this over your own mail, see the [getting started](https://github.com/mihaip/mail-trends/wiki/Getting-Started) page.
+To run this over your own mail, see the [getting started](https://github.com/icyerasor/mail-trends/wiki/Getting-Started) page.
 
 ![Screenshot](https://f.cloud.github.com/assets/513813/18310/690f2708-48a9-11e2-8d07-26684df2bcc4.png)
 
